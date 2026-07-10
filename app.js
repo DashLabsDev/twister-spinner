@@ -11,8 +11,16 @@
     yellow: { label: "Yellow", css: "var(--yellow)" },
   };
 
-  // Four quadrants, matching the physical spinner's layout (clockwise from top).
-  const QUADRANTS = ["Left Hand", "Left Foot", "Right Hand", "Right Foot"];
+  // Four quadrants, clockwise from the top-right. Matches the physical
+  // spinner's sequence (Right Hand -> Right Foot -> Left Hand -> Left Foot),
+  // rotated so Right Hand sits in the top-right.
+  //   q0 = top-right, q1 = bottom-right, q2 = bottom-left, q3 = top-left
+  const QUADRANTS = [
+    { label: "Right Hand", part: "hand", side: "right" },
+    { label: "Right Foot", part: "foot", side: "right" },
+    { label: "Left Hand",  part: "hand", side: "left"  },
+    { label: "Left Foot",  part: "foot", side: "left"  },
+  ];
 
   // 6 spots per quadrant: four colors + two special spots (Air, Spinner's Choice).
   const QUAD_PATTERN = [
@@ -30,7 +38,7 @@
   const resultLimb = document.getElementById("resultLimb");
   const resultColor = document.getElementById("resultColor");
 
-  const CX = 200, CY = 200, R = 192, DOT_R = 17, LABEL_R = 96;
+  const CX = 200, CY = 200, R = 192, DOT_R = 17;
   const NS = "http://www.w3.org/2000/svg";
   const dots = [];
   let currentDeg = 0;
@@ -68,43 +76,104 @@
     return g;
   }
 
-  // Draw the wheel: 4 quadrant wedges, dividing lines, limb labels, and 24 spots.
+  // Red open-hand silhouette, fingers pointing up (-y). Inherits fill.
+  function handShape() {
+    const g = el("g", {});
+    const cap = (x, y, w, h) => el("rect", { x, y, width: w, height: h, rx: w / 2, ry: w / 2 });
+    g.appendChild(el("rect", { x: -13, y: -6, width: 26, height: 22, rx: 10, ry: 10 })); // palm
+    g.appendChild(cap(-12.5, -27, 6.5, 25)); // index
+    g.appendChild(cap(-5, -33, 6.5, 31));     // middle (longest)
+    g.appendChild(cap(2.5, -30, 6.5, 28));    // ring
+    g.appendChild(cap(10, -22, 6, 20));       // pinky
+    const thumb = cap(-3, -10, 6.5, 20);      // thumb, angled off lower-left
+    thumb.setAttribute("transform", "translate(-13 12) rotate(38)");
+    g.appendChild(thumb);
+    return g;
+  }
+
+  // Red footprint silhouette, toes pointing up (-y). Inherits fill.
+  function footShape() {
+    const g = el("g", {});
+    g.appendChild(el("path", {
+      d: "M 0 -15 C 12 -15 12 0 9 9 C 7 17 5 23 0 23 C -5 23 -7 17 -9 9 C -12 0 -12 -15 0 -15 Z",
+    }));
+    [[-9, -19, 3.4], [-3.8, -23, 3.9], [1.2, -23, 3.7], [5.8, -21, 3.1], [9.2, -18, 2.6]]
+      .forEach(([x, y, r]) => g.appendChild(el("circle", { cx: x, cy: y, r })));
+    return g;
+  }
+
+  // Red hand/foot silhouette for a quadrant, rotated so it points outward.
+  function limbIcon(meta, mid) {
+    const c = polar(mid, 86);
+    const mirror = meta.side === "left" ? -1 : 1;
+    const g = el("g", {
+      fill: "var(--red)",
+      transform: `translate(${c.x} ${c.y}) rotate(${mid}) scale(${0.92 * mirror} 0.92)`,
+    });
+    g.appendChild(meta.part === "hand" ? handShape() : footShape());
+    return g;
+  }
+
+  // Curved quadrant label following the rim arc, centered on the mid angle.
+  function curvedLabel(text, mid) {
+    const LR = 150, SPAN = 40;
+    const s = polar(mid - SPAN, LR), e = polar(mid + SPAN, LR);
+    const id = "arc" + Math.round(mid);
+    wheel.appendChild(el("path", {
+      id, fill: "none", d: `M ${s.x} ${s.y} A ${LR} ${LR} 0 0 1 ${e.x} ${e.y}`,
+    }));
+    const t = el("text", {
+      "font-size": 17, "font-weight": 800, "letter-spacing": 1.5, fill: "var(--red)",
+    });
+    const tp = el("textPath", {
+      href: "#" + id, "xlink:href": "#" + id, startOffset: "50%", "text-anchor": "middle",
+    });
+    tp.setAttribute("dominant-baseline", "middle");
+    tp.textContent = text.toUpperCase();
+    t.appendChild(tp);
+    wheel.appendChild(t);
+  }
+
+  // Small red "Twister" wordmark near the center (one upright, one flipped).
+  function wordmark(cy, flip) {
+    const t = el("text", {
+      x: CX, y: cy, "text-anchor": "middle", "dominant-baseline": "middle",
+      "font-size": 16, "font-weight": 800, "font-style": "italic", fill: "var(--red)",
+    });
+    if (flip) t.setAttribute("transform", `rotate(180 ${CX} ${cy})`);
+    t.textContent = "Twister";
+    return t;
+  }
+
+  // Draw the wheel to resemble the real Twister spinner.
   function buildWheel() {
-    wheel.appendChild(el("circle", { cx: CX, cy: CY, r: R + 4, fill: "#fdfdfb" }));
-
-    const wedgeTints = ["#f7f7ff", "#eef7f0", "#eef4fb", "#fbf7ec"];
-    for (let q = 0; q < 4; q++) {
-      const start = polar(q * 90, R);
-      const end = polar((q + 1) * 90, R);
-      const path = `M ${CX} ${CY} L ${start.x} ${start.y} A ${R} ${R} 0 0 1 ${end.x} ${end.y} Z`;
-      wheel.appendChild(el("path", { d: path, fill: wedgeTints[q] }));
-    }
-
-    // Cross dividers.
-    for (const a of [0, 90]) {
-      const p1 = polar(a, R), p2 = polar(a + 180, R);
-      wheel.appendChild(el("line", {
-        x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y,
-        stroke: "#cdd0d8", "stroke-width": 2,
+    // Base disk: white rim + light-gray face with faint concentric rings.
+    wheel.appendChild(el("circle", { cx: CX, cy: CY, r: R + 4, fill: "#ffffff" }));
+    wheel.appendChild(el("circle", { cx: CX, cy: CY, r: R, fill: "#ececeb" }));
+    for (const rr of [38, 72, 106, 140, 174]) {
+      wheel.appendChild(el("circle", {
+        cx: CX, cy: CY, r: rr, fill: "none", stroke: "#e2e2df", "stroke-width": 7,
       }));
     }
 
-    // Limb labels, centered in each quadrant.
+    // Thin cross dividers.
+    for (const a of [0, 90]) {
+      const p1 = polar(a, R), p2 = polar(a + 180, R);
+      wheel.appendChild(el("line", {
+        x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y, stroke: "#b7b7b3", "stroke-width": 1.5,
+      }));
+    }
+
+    // Per-quadrant curved label + limb silhouette.
     for (let q = 0; q < 4; q++) {
       const mid = q * 90 + 45;
-      const p = polar(mid, LABEL_R);
-      const t = el("text", {
-        x: p.x, y: p.y, "text-anchor": "middle", "dominant-baseline": "middle",
-        "font-size": 15, "font-weight": 800, fill: "#c62b22",
-        transform: `rotate(${mid > 90 && mid < 270 ? mid + 180 : mid} ${p.x} ${p.y})`,
-      });
-      QUADRANTS[q].split(" ").forEach((word, i, arr) => {
-        const ts = el("tspan", { x: p.x, dy: i === 0 ? -(arr.length - 1) * 8 : 16 });
-        ts.textContent = word.toUpperCase();
-        t.appendChild(ts);
-      });
-      wheel.appendChild(t);
+      curvedLabel(QUADRANTS[q].label, mid);
+      wheel.appendChild(limbIcon(QUADRANTS[q], mid));
     }
+
+    // Center "Twister" wordmarks.
+    wheel.appendChild(wordmark(CY - 46, false));
+    wheel.appendChild(wordmark(CY + 46, true));
 
     // 24 spots around the rim.
     for (let i = 0; i < 24; i++) {
@@ -124,10 +193,10 @@
         wheel.appendChild(specialIcon(type, p, fill));
       }
 
-      dots.push({ angleDeg: angle, limb: QUADRANTS[q], type });
+      dots.push({ angleDeg: angle, limb: QUADRANTS[q].label, type });
     }
 
-    wheel.appendChild(el("circle", { cx: CX, cy: CY, r: 10, fill: "#2a2a2a" }));
+    wheel.appendChild(el("circle", { cx: CX, cy: CY, r: 9, fill: "#ffffff", stroke: "#b7b7b3", "stroke-width": 2 }));
   }
 
   // ---- Sound (WebAudio) ----
