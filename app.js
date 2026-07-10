@@ -33,10 +33,12 @@
   const wheel = document.getElementById("wheel");
   const needle = document.getElementById("needle");
   const spinBtn = document.getElementById("spinBtn");
+  const newGameBtn = document.getElementById("newGameBtn");
   const soundBtn = document.getElementById("soundBtn");
   const resultEl = document.getElementById("result");
   const resultLimb = document.getElementById("resultLimb");
   const resultColor = document.getElementById("resultColor");
+  const movesEl = document.getElementById("moves");
 
   const CX = 200, CY = 200, R = 192, DOT_R = 17;
   const NS = "http://www.w3.org/2000/svg";
@@ -44,6 +46,7 @@
   let currentDeg = 0;
   let spinning = false;
   let soundOn = true;
+  let moves = 0;
 
   // Convert a clockwise-from-top angle (deg) to an SVG x/y at a given radius.
   function polar(angleDeg, radius) {
@@ -76,47 +79,56 @@
     return g;
   }
 
-  // Red open-hand silhouette, fingers pointing up (-y). Inherits fill.
+  // Red open-hand silhouette, fingers up (-y), thumb off to the left.
+  // Fanned rounded fingers over an organic palm; inherits fill from parent.
   function handShape() {
     const g = el("g", {});
-    const cap = (x, y, w, h) => el("rect", { x, y, width: w, height: h, rx: w / 2, ry: w / 2 });
-    g.appendChild(el("rect", { x: -13, y: -6, width: 26, height: 22, rx: 10, ry: 10 })); // palm
-    g.appendChild(cap(-12.5, -27, 6.5, 25)); // index
-    g.appendChild(cap(-5, -33, 6.5, 31));     // middle (longest)
-    g.appendChild(cap(2.5, -30, 6.5, 28));    // ring
-    g.appendChild(cap(10, -22, 6, 20));       // pinky
-    const thumb = cap(-3, -10, 6.5, 20);      // thumb, angled off lower-left
-    thumb.setAttribute("transform", "translate(-13 12) rotate(38)");
+    const finger = (dx, len, ang, w) => {
+      const r = el("rect", { x: -w / 2, y: -len, width: w, height: len + w / 2, rx: w / 2, ry: w / 2 });
+      r.setAttribute("transform", `translate(${dx} 3) rotate(${ang})`);
+      g.appendChild(r);
+    };
+    finger(-14.5, 39, -13, 9.5);  // index
+    finger(-4.5, 47, -4, 10);     // middle (longest)
+    finger(5.5, 43, 5, 9.5);      // ring
+    finger(14.5, 32, 15, 8.5);    // pinky
+    g.appendChild(el("path", {    // palm
+      d: "M -19 5 C -21 16 -19 29 -11 33 C -3 37 9 37 15 32 C 21 27 21 15 19 5 Z",
+    }));
+    const thumb = el("rect", { x: -5.5, y: -23, width: 11, height: 29, rx: 5.5, ry: 5.5 });
+    thumb.setAttribute("transform", "translate(-17 19) rotate(46)");
     g.appendChild(thumb);
     return g;
   }
 
-  // Red footprint silhouette, toes pointing up (-y). Inherits fill.
+  // Red footprint silhouette, toes up (-y). Big toe on the inner (left) side.
   function footShape() {
     const g = el("g", {});
-    g.appendChild(el("path", {
-      d: "M 0 -15 C 12 -15 12 0 9 9 C 7 17 5 23 0 23 C -5 23 -7 17 -9 9 C -12 0 -12 -15 0 -15 Z",
+    g.appendChild(el("path", {   // sole: ball -> arch -> heel
+      d: "M 1 -15 C 11 -15 13 -4 11 4 C 10 9 8 12 7.5 17 C 7 22 5 26 0 26 " +
+         "C -5 26 -7 21 -7.5 16 C -8 11 -10 8 -11 3 C -13 -5 -10 -15 1 -15 Z",
     }));
-    [[-9, -19, 3.4], [-3.8, -23, 3.9], [1.2, -23, 3.7], [5.8, -21, 3.1], [9.2, -18, 2.6]]
+    [[-8, -20, 4.1], [-2.6, -24, 3.7], [1.9, -24, 3.3], [6, -22, 2.8], [9.2, -19, 2.3]]
       .forEach(([x, y, r]) => g.appendChild(el("circle", { cx: x, cy: y, r })));
     return g;
   }
 
   // Red hand/foot silhouette for a quadrant, rotated so it points outward.
   function limbIcon(meta, mid) {
-    const c = polar(mid, 86);
+    const c = polar(mid, 78);
     const mirror = meta.side === "left" ? -1 : 1;
     const g = el("g", {
       fill: "var(--red)",
-      transform: `translate(${c.x} ${c.y}) rotate(${mid}) scale(${0.92 * mirror} 0.92)`,
+      transform: `translate(${c.x} ${c.y}) rotate(${mid}) scale(${0.78 * mirror} 0.78)`,
     });
     g.appendChild(meta.part === "hand" ? handShape() : footShape());
     return g;
   }
 
-  // Curved quadrant label following the rim arc, centered on the mid angle.
+  // Curved quadrant label following an arc, centered on the mid angle.
+  // Sits inside the ring of color dots so it never overlaps them.
   function curvedLabel(text, mid) {
-    const LR = 150, SPAN = 40;
+    const LR = 132, SPAN = 42;
     const s = polar(mid - SPAN, LR), e = polar(mid + SPAN, LR);
     const id = "arc" + Math.round(mid);
     wheel.appendChild(el("path", {
@@ -200,13 +212,27 @@
   }
 
   // ---- Sound (WebAudio) ----
+  // iOS/Safari start the AudioContext "suspended"; it can only be created or
+  // resumed from inside a user gesture, so we unlock it on the first tap.
   let audioCtx = null;
   function ac() {
     if (!audioCtx) {
       const AC = window.AudioContext || window.webkitAudioContext;
       if (AC) audioCtx = new AC();
     }
+    if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
     return audioCtx;
+  }
+  // Call from a click/tap handler to unlock audio (plays a silent blip).
+  function unlockAudio() {
+    const ctx = ac();
+    if (!ctx) return;
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    g.gain.value = 0.0001;
+    osc.connect(g).connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.02);
   }
   function tone(freq, when, dur, type, gain) {
     const ctx = ac();
@@ -225,10 +251,10 @@
   function playSpinTicks(duration) {
     const ctx = ac();
     if (!ctx || !soundOn) return;
-    let t = 0, gap = 0.05;
+    let t = 0.06, gap = 0.05;      // small lead so the first tick isn't dropped
     const start = ctx.currentTime;
     while (t < duration) {
-      tone(880, start + t, 0.03, "square", 0.05);
+      tone(880, start + t, 0.03, "square", 0.12);
       gap *= 1.12;                 // ticks slow down as it winds down
       t += gap;
     }
@@ -236,13 +262,14 @@
   function playDing() {
     const ctx = ac();
     if (!ctx || !soundOn) return;
-    const now = ctx.currentTime;
+    const now = ctx.currentTime + 0.02;
     [523.25, 659.25, 783.99].forEach((f, i) =>
-      tone(f, now + i * 0.09, 0.5, "triangle", 0.14));
+      tone(f, now + i * 0.09, 0.5, "triangle", 0.22));
   }
 
   // ---- Result display ----
   function showResult(dot) {
+    updateMoves();
     resultEl.classList.remove("pop");
     void resultEl.offsetWidth;
     resultEl.classList.add("pop");
@@ -266,6 +293,7 @@
   // ---- Spin ----
   function spin() {
     if (spinning) return;
+    if (soundOn) unlockAudio();                          // unlock within the tap
     spinning = true;
     spinBtn.disabled = true;
 
@@ -282,25 +310,47 @@
     needle.style.transition = `transform ${duration}s cubic-bezier(0.17,0.67,0.12,0.99)`;
     needle.style.transform = `rotate(${currentDeg}deg)`;
 
-    if (soundOn && ac() && ac().state === "suspended") ac().resume();
     playSpinTicks(duration - 0.3);
 
     const done = () => {
       needle.removeEventListener("transitionend", done);
       spinning = false;
       spinBtn.disabled = false;
+      moves += 1;
       showResult(dot);
       playDing();
     };
     needle.addEventListener("transitionend", done, { once: true });
   }
 
+  // Reset to a fresh game: clear the count, result, and needle.
+  function newGame() {
+    if (spinning) return;
+    moves = 0;
+    currentDeg = 0;
+    needle.style.transition = "none";
+    needle.style.transform = "rotate(0deg)";
+    void needle.offsetWidth;                             // commit before re-enabling transitions
+    resultLimb.textContent = "Tap SPIN";
+    resultColor.textContent = "to start the game";
+    resultColor.style.color = "";
+    updateMoves();
+    resultEl.classList.remove("pop");
+    void resultEl.offsetWidth;
+    resultEl.classList.add("pop");
+  }
+
+  function updateMoves() {
+    movesEl.textContent = moves > 0 ? `Move ${moves}` : "";
+  }
+
   spinBtn.addEventListener("click", spin);
+  newGameBtn.addEventListener("click", newGame);
   soundBtn.addEventListener("click", () => {
     soundOn = !soundOn;
     soundBtn.setAttribute("aria-pressed", String(soundOn));
     soundBtn.textContent = soundOn ? "🔊" : "🔇";
-    if (soundOn) ac() && ac().resume && ac().resume();
+    if (soundOn) unlockAudio();
   });
 
   buildWheel();

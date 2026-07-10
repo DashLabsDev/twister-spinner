@@ -132,6 +132,23 @@ html, body {
   100% { transform: scale(1); opacity: 1; }
 }
 
+.moves {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  opacity: 0.55;
+  min-height: 16px;
+}
+
+.controls {
+  width: 100%;
+  max-width: 460px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 .spin-btn {
   width: 100%;
   max-width: 460px;
@@ -149,6 +166,21 @@ html, body {
 }
 .spin-btn:active { transform: scale(0.97); }
 .spin-btn:disabled { opacity: 0.5; cursor: default; }
+
+.newgame-btn {
+  width: 100%;
+  padding: 13px;
+  border: 1.5px solid rgba(255, 255, 255, 0.28);
+  border-radius: 16px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  transition: transform 0.08s ease, background 0.2s ease;
+}
+.newgame-btn:active { transform: scale(0.97); background: rgba(255, 255, 255, 0.12); }
 
 .hint {
   margin: 2px 0 0;
