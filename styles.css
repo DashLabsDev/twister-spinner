@@ -1,0 +1,156 @@
+:root {
+  --red: #e6352b;
+  --green: #35b34a;
+  --blue: #1e9fe0;
+  --yellow: #f4c531;
+  --purple: #7a3fb3;
+  --bg-1: #241640;
+  --bg-2: #120b22;
+  --ink: #ffffff;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: radial-gradient(120% 120% at 50% 0%, var(--bg-1), var(--bg-2));
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.app {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: max(env(safe-area-inset-top), 12px) 16px max(env(safe-area-inset-bottom), 16px);
+  gap: 8px;
+}
+
+.topbar {
+  width: 100%;
+  max-width: 460px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.topbar h1 {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  background: linear-gradient(90deg, var(--red), var(--yellow), var(--green), var(--blue));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.icon-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: var(--ink);
+  font-size: 20px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.icon-btn[aria-pressed="false"] { opacity: 0.45; }
+
+.stage {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+}
+
+.wheel-wrap {
+  position: relative;
+  width: min(80vw, 60vh, 440px);
+  aspect-ratio: 1 / 1;
+}
+
+#wheel {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 12px 30px rgba(0, 0, 0, 0.5));
+}
+
+.needle {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(0deg);
+  transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+  will-change: transform;
+  pointer-events: none;
+}
+.needle svg {
+  height: 62%;
+  width: auto;
+  transform: translateY(-14%);
+}
+.needle polygon { fill: #fff; }
+.needle circle { fill: #fff; }
+.needle svg { filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.5)); }
+
+.result {
+  width: 100%;
+  max-width: 460px;
+  min-height: 92px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+}
+.result-limb {
+  font-size: clamp(24px, 7vw, 34px);
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+.result-color {
+  font-size: clamp(20px, 6vw, 30px);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.result.pop { animation: pop 0.4s ease; }
+@keyframes pop {
+  0% { transform: scale(0.7); opacity: 0; }
+  60% { transform: scale(1.08); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.spin-btn {
+  width: 100%;
+  max-width: 460px;
+  padding: 20px;
+  border: none;
+  border-radius: 20px;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--red), var(--purple));
+  box-shadow: 0 8px 22px rgba(122, 63, 179, 0.5);
+  cursor: pointer;
+  transition: transform 0.08s ease, opacity 0.2s ease;
+}
+.spin-btn:active { transform: scale(0.97); }
+.spin-btn:disabled { opacity: 0.5; cursor: default; }
+
+.hint {
+  margin: 2px 0 0;
+  font-size: 12px;
+  opacity: 0.5;
+}

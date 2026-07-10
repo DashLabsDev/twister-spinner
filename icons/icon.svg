@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="32%" r="80%">
+      <stop offset="0%" stop-color="#3a2260"/>
+      <stop offset="100%" stop-color="#120b22"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <circle cx="256" cy="256" r="168" fill="#fdfdfb"/>
+  <g stroke="#ffffff" stroke-width="8">
+    <circle cx="256" cy="120" r="30" fill="#e6352b"/>
+    <circle cx="392" cy="256" r="30" fill="#35b34a"/>
+    <circle cx="256" cy="392" r="30" fill="#1e9fe0"/>
+    <circle cx="120" cy="256" r="30" fill="#f4c531"/>
+    <circle cx="352" cy="160" r="26" fill="#7a3fb3"/>
+    <circle cx="352" cy="352" r="26" fill="#7a3fb3"/>
+    <circle cx="160" cy="352" r="26" fill="#7a3fb3"/>
+    <circle cx="160" cy="160" r="26" fill="#7a3fb3"/>
+  </g>
+  <g transform="rotate(38 256 256)">
+    <polygon points="256,150 280,270 256,300 232,270" fill="#2a2a2a"/>
+    <circle cx="256" cy="256" r="22" fill="#2a2a2a"/>
+  </g>
+</svg>

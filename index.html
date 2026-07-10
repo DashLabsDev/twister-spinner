@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#1b1230" />
+  <title>Twister Spinner</title>
+  <meta name="description" content="A random Twister spinner — picks a hand or foot and a color, plus Air and Spinner's Choice." />
+
+  <!-- Home-screen / PWA -->
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Twister" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <h1>Twister</h1>
+      <button id="soundBtn" class="icon-btn" aria-pressed="true" title="Toggle sound">🔊</button>
+    </header>
+
+    <section class="stage">
+      <div class="wheel-wrap">
+        <svg id="wheel" viewBox="0 0 400 400" role="img" aria-label="Twister spinner wheel"></svg>
+        <div id="needle" class="needle" aria-hidden="true">
+          <svg viewBox="0 0 40 200" width="40" height="200">
+            <polygon points="20,6 30,120 20,140 10,120" />
+            <circle cx="20" cy="150" r="16" />
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <section class="result" id="result" aria-live="polite">
+      <div class="result-limb" id="resultLimb">Tap SPIN</div>
+      <div class="result-color" id="resultColor">to start the game</div>
+    </section>
+
+    <button id="spinBtn" class="spin-btn">SPIN</button>
+
+    <p class="hint">Add to Home Screen for full-screen play</p>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
