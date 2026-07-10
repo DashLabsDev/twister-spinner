@@ -1,5 +1,5 @@
 // Simple offline cache so the spinner works with no connection.
-const CACHE = "twister-v5";
+const CACHE = "twister-v6";
 const ASSETS = [
   ".",
   "index.html",
