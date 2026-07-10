@@ -1,9 +1,10 @@
 :root {
-  --red: #e6352b;
-  --green: #35b34a;
-  --blue: #1e9fe0;
-  --yellow: #f4c531;
-  --purple: #7a3fb3;
+  /* Sampled to match the physical Twister board/spinner. */
+  --red: #ea3323;
+  --green: #64b73f;
+  --blue: #1ba3dc;
+  --yellow: #ffd21c;
+  --purple: #7a3f96;
   --bg-1: #241640;
   --bg-2: #120b22;
   --ink: #ffffff;

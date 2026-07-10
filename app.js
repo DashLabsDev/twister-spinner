@@ -49,6 +49,25 @@
     return node;
   }
 
+  // White icon for a special spot, centered on the dot at p.
+  //  - "air":    a puffy cloud (overlapping white circles)
+  //  - "choice": a spinner pointer (white kite + hub), like the real spinner
+  function specialIcon(type, p, dotFill) {
+    const g = el("g", { fill: "#fff" });
+    if (type === "air") {
+      g.appendChild(el("ellipse", { cx: p.x, cy: p.y + 3, rx: 11, ry: 6 }));
+      g.appendChild(el("circle", { cx: p.x - 6, cy: p.y + 1, r: 5 }));
+      g.appendChild(el("circle", { cx: p.x, cy: p.y - 4, r: 7 }));
+      g.appendChild(el("circle", { cx: p.x + 6, cy: p.y + 1, r: 5 }));
+    } else {
+      g.appendChild(el("path", {
+        d: `M ${p.x} ${p.y - 11} L ${p.x + 4.5} ${p.y + 4} L ${p.x} ${p.y + 8} L ${p.x - 4.5} ${p.y + 4} Z`,
+      }));
+      g.appendChild(el("circle", { cx: p.x, cy: p.y + 4.5, r: 2.8, fill: dotFill }));
+    }
+    return g;
+  }
+
   // Draw the wheel: 4 quadrant wedges, dividing lines, limb labels, and 24 spots.
   function buildWheel() {
     wheel.appendChild(el("circle", { cx: CX, cy: CY, r: R + 4, fill: "#fdfdfb" }));
@@ -102,12 +121,7 @@
       }));
 
       if (!isColor) {
-        const icon = el("text", {
-          x: p.x, y: p.y + 1, "text-anchor": "middle", "dominant-baseline": "central",
-          "font-size": 16, fill: "#fff", "font-weight": 800,
-        });
-        icon.textContent = type === "air" ? "☁" : "★";
-        wheel.appendChild(icon);
+        wheel.appendChild(specialIcon(type, p, fill));
       }
 
       dots.push({ angleDeg: angle, limb: QUADRANTS[q], type });
