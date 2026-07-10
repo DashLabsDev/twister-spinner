@@ -128,14 +128,15 @@
   // Curved quadrant label following an arc, centered on the mid angle.
   // Sits inside the ring of color dots so it never overlaps them.
   function curvedLabel(text, mid) {
-    const LR = 132, SPAN = 42;
+    const LR = 126, SPAN = 27;
     const s = polar(mid - SPAN, LR), e = polar(mid + SPAN, LR);
     const id = "arc" + Math.round(mid);
     wheel.appendChild(el("path", {
       id, fill: "none", d: `M ${s.x} ${s.y} A ${LR} ${LR} 0 0 1 ${e.x} ${e.y}`,
     }));
     const t = el("text", {
-      "font-size": 17, "font-weight": 800, "letter-spacing": 1.5, fill: "var(--red)",
+      class: "qlabel",
+      "font-size": 13.5, "font-weight": 800, "letter-spacing": 0.5, fill: "var(--red)",
     });
     const tp = el("textPath", {
       href: "#" + id, "xlink:href": "#" + id, startOffset: "50%", "text-anchor": "middle",
@@ -197,6 +198,7 @@
       const fill = isColor ? COLORS[type].css : "var(--purple)";
 
       wheel.appendChild(el("circle", {
+        class: "dot",
         cx: p.x, cy: p.y, r: DOT_R, fill,
         stroke: "#ffffff", "stroke-width": 3,
       }));
